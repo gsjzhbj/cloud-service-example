@@ -34,6 +34,6 @@ public class ConsumerServiceImpl implements IRestConsumerService {
         return response;
     }
     public String defaultFallback(String msg){
-        return "fallback";
+        return "rest fallback "+msg;
     }
 }

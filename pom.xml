@@ -23,6 +23,7 @@
 		<module>eureka-server</module>
 		<module>provider</module>
 		<module>consumer</module>
+		<module>gateway</module>
 	</modules>
 	<dependencies>
 

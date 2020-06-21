@@ -18,6 +18,6 @@ public class RibbonConsumerServiceImpl implements IRibbonConsumerService {
     }
 
     public String defaultFallback(String msg){
-        return "fallback";
+        return "ribbon fallback "+msg;
     }
 }
