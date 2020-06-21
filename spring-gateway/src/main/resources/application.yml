@@ -1,0 +1,21 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-consumer
+          uri: http://localhost:8094
+          predicates:
+            - Path=/consumer/{segment}
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5    # 获取注册列表的周期
+    service-url:
+      #    eureka注册中心地址
+      defaultZone: http://127.0.0.1:8090/eureka,http://127.0.0.1:8091/eureka,http://127.0.0.1:8092/eureka
+  instance:
+    prefer-ip-address: true   # 返回ip地址而不是hostname
+    ip-address: 127.0.0.1      # 本机地址
