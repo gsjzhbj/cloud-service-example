@@ -25,6 +25,7 @@
 		<module>consumer</module>
 		<module>gateway</module>
 		<module>spring-gateway</module>
+		<module>commons</module>
 	</modules>
 	<dependencies>
 

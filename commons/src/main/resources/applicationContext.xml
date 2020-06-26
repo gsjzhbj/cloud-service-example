@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="
+                    http://www.springframework.org/schema/context
+                    http://www.springframework.org/schema/context/spring-context.xsd
+                    http://www.springframework.org/schema/beans
+                    http://www.springframework.org/schema/beans/spring-beans.xsd
+                    http://www.springframework.org/schema/tx
+                    http://www.springframework.org/schema/tx/spring-tx.xsd
+                    http://www.springframework.org/schema/aop
+                    http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 加载配置文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+
+    <!-- 自动扫描web包 ,将带有注解的类纳入spring容器管理 -->
+    <!--Spring 容器初始化的时候，会扫描 com.web 下标有
+        (@Component,@Service,@Controller,@Repository) 注解的类,纳入spring容器管理-->
+    <context:component-scan base-package="com.example"/>
+
+
+    <!-- dataSource 配置 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+
+        <!-- 基本属性 url、user、password -->
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+        <property name="url" value="${jdbcUrl}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+
+        <!-- 配置初始化大小 -->
+        <property name="initialSize" value="1"/>
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="1"/>
+        <!-- 连接池最大使用连接数量 -->
+        <property name="maxActive" value="20"/>
+
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name="maxWait" value="60000"/>
+
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+
+    </bean>
+
+
+    <!--使用Spring+MyBatis的环境下，我们需要配值一个SqlSessionFactoryBean来充当SqlSessionFactory
+        在基本的MyBatis中，SqlSessionFactory可以使用SqlSessionFactoryBuilder来创建，
+        而在mybatis-spring中，则使用SqlSessionFactoryBean来创建。-->
+    <!-- mybatis文件配置，扫描所有mapper文件 -->
+    <!--    <bean id="sqlSessionFactory"-->
+    <!--          class="org.mybatis.spring.SqlSessionFactoryBean"-->
+    <!--          p:dataSource-ref="dataSource"-->
+    <!--          p:configLocation="classpath:mybatis-config.xml"-->
+    <!--          p:typeAliasesPackage="com.example"-->
+    <!--          p:mapperLocations="classpath*:mapper/*.xml"/>-->
+
+
+    <!--    &lt;!&ndash; spring与mybatis整合配置，自动扫描所有dao ,将dao接口生成代理注入到Spring&ndash;&gt;-->
+    <!--    &lt;!&ndash; MapperScannerConfigurer 的作用是取代手动添加 Mapper ，自动扫描完成接口代理。-->
+    <!--           而不需要再在mybatis-config.xml里面去逐一配置mappers。 &ndash;&gt;-->
+    <!--    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"-->
+    <!--          p:basePackage="com.example.dao"-->
+    <!--          p:sqlSessionFactoryBeanName="sqlSessionFactory"/>-->
+
+
+    <!-- 对dataSource 数据源进行事务管理 -->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource"/>
+
+
+    <!-- 配置AOP通知 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <!-- 配置事务属性 -->
+        <tx:attributes>
+            <!-- 添加事务管理的方法 -->
+            <tx:method name="save*" propagation="REQUIRED"/>
+            <tx:method name="delete*" propagation="REQUIRED"/>
+            <tx:method name="update*" propagation="REQUIRED"/>
+            <tx:method name="select*" propagation="REQUIRED" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+
+    <!-- 配置一个切面AOP -->
+    <!--    <aop:config>-->
+    <!--        <aop:aspect id="helloWorldAspect" ref="txAdvice">-->
+    <!--            &lt;!&ndash; 配置切点 &ndash;&gt;-->
+    <!--            <aop:pointcut id="pointcut" expression="execution(* com.example.*.*(..))"/>-->
+    <!--            &lt;!&ndash; 配置前置通知 &ndash;&gt;-->
+    <!--            <aop:before pointcut-ref="pointcut" method="beforeAdvice"/>-->
+    <!--            &lt;!&ndash; 配置前置通知 &ndash;&gt;-->
+    <!--            <aop:after pointcut-ref="pointcut" method="afterAdvice"/>-->
+    <!--            &lt;!&ndash; 配置后置返回通知 &ndash;&gt;-->
+    <!--            <aop:after-returning pointcut-ref="pointcut" method="afterReturnAdvice" returning="result"/>-->
+    <!--            &lt;!&ndash; 配置环绕通知 &ndash;&gt;-->
+    <!--            <aop:around pointcut-ref="pointcut" method="aroundAdvice"/>-->
+    <!--            &lt;!&ndash; 异常通知 &ndash;&gt;-->
+    <!--            <aop:after-throwing pointcut-ref="pointcut" method="throwingAdvice" throwing="e"/>-->
+    <!--        </aop:aspect>-->
+    <!--    </aop:config>-->
+
+
+    <!-- 配置使Spring采用CGLIB代理 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <!-- 启用对事务注解的支持 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+
+    <!-- 配置JedisPoolConfig-->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="50"/>
+        <property name="maxTotal" value="100"/>
+        <property name="maxWaitMillis" value="20000"/>
+    </bean>
+    <!--配置JedisConnectionFactory-->
+    <bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="hostName" value="localhost"/>
+        <property name="port" value="6379"/>
+        <property name="poolConfig" ref="jedisPoolConfig"/>
+    </bean>
+    <!--使用字符串进行序列化-->
+    <bean id="stringReadisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
+    <!--使用JDK的序列化器进行转化-->
+    <bean id="jdkSerializationRedisSerializer"
+          class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"/>
+    <!--配置Spring RedisTemplate-->
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="keySerializer" ref="stringReadisSerializer"/>
+        <property name="valueSerializer" ref="stringReadisSerializer"/>
+    </bean>
+
+
+    <!-- 创建Jedis的连接池配置对象    JedisPoolConfig config = new JedisPoolConfig(); -->
+        
+    <bean id="config" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxTotal" value="50"/>
+        <property name="maxIdle" value="10"></property>
+    </bean>
+    <!-- 创建连接池对象  JedisPool pool = new JedisPool(config, "127.0.0.1", 6379); -->
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg index="0" ref="config"></constructor-arg>
+        <constructor-arg index="1" value="127.0.0.1" type="java.lang.String"></constructor-arg>
+        <constructor-arg index="2" value="6379"></constructor-arg>
+    </bean>
+</beans>
